@@ -1,0 +1,779 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Attendance System</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/html5-qrcode"></script>
+
+<style>
+*{box-sizing:border-box;font-family:'Poppins',sans-serif;margin:0;padding:0}
+
+:root{
+  --bg:#f4f7fb;
+  --card:#ffffff;
+  --text:#2c3e50;
+  --primary:#1e3c72;
+  --sidebar:linear-gradient(180deg,#1e3c72,#2a5298);
+}
+
+body.dark{
+  --bg:#121212;
+  --card:#1e1e1e;
+  --text:#ffffff;
+  --sidebar:linear-gradient(180deg,#000,#1e1e1e);
+}
+
+body{background:var(--bg);color:var(--text);min-height:100vh}
+
+/* ===== LOGIN ===== */
+#loginPage{
+  min-height:100vh;
+  background:linear-gradient(135deg,#1e3c72,#2a5298);
+  display:flex;
+  justify-content:center;
+  align-items:center;
+}
+
+.login-box{
+  width:90%;
+  max-width:380px;
+  background:white;
+  padding:30px;
+  border-radius:18px;
+  box-shadow:0 12px 30px rgba(0,0,0,.25);
+}
+
+.login-box h2{text-align:center;margin-bottom:20px;color:#1e3c72}
+
+.login-box input,
+.login-box select,
+.login-box button{
+  width:100%;
+  padding:14px;
+  margin-top:12px;
+  border-radius:10px;
+  border:1px solid #ccc;
+  font-size:15px;
+}
+
+.login-box button{
+  background:linear-gradient(90deg,#1e3c72,#2a5298);
+  color:white;
+  border:none;
+  cursor:pointer;
+  font-weight:600;
+}
+
+/* ===== DASHBOARD LAYOUT ===== */
+.dashboard{
+  display:none;
+  min-height:100vh;
+}
+
+.layout{
+  display:flex;
+  min-height:100vh;
+}
+
+/* ===== SIDEBAR ===== */
+.sidebar{
+  width:240px;
+  background:var(--sidebar);
+  color:white;
+  padding:20px;
+}
+
+.sidebar h2{text-align:center;margin-bottom:25px}
+
+.sidebar a{
+  display:block;
+  color:white;
+  text-decoration:none;
+  padding:12px;
+  border-radius:10px;
+  margin:8px 0;
+  cursor:pointer;
+}
+
+.sidebar a.active,
+.sidebar a:hover{background:rgba(255,255,255,.25)}
+
+/* ===== MAIN ===== */
+.main{flex:1;padding:20px}
+
+/* ===== HEADER ===== */
+.header{
+  background:var(--card);
+  padding:15px 20px;
+  border-radius:14px;
+  margin-bottom:20px;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:10px;
+}
+
+/* ===== SECTIONS ===== */
+section{display:none}
+section.active{display:block}
+
+/* ===== CARDS ===== */
+.card{
+  background:var(--card);
+  padding:20px;
+  border-radius:14px;
+  margin-bottom:20px;
+  box-shadow:0 5px 15px rgba(0,0,0,.1);
+}
+
+.cards{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(200px,1fr));
+  gap:20px;
+}
+
+.big-card{
+  padding:25px;
+  font-size:20px;
+  font-weight:600;
+  text-align:center;
+}
+
+/* ===== PROFILE GRID ===== */
+.profile-grid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:12px;
+  margin-top:15px;
+}
+
+.profile-grid label{
+  display:flex;
+  flex-direction:column;
+  font-size:14px;
+}
+
+.profile-grid input{
+  padding:10px;
+  border-radius:8px;
+  border:1px solid #ccc;
+}
+
+/* ===== TABLE ===== */
+table{
+  width:100%;
+  border-collapse:collapse;
+  background:var(--card);
+  border-radius:12px;
+  overflow:hidden;
+}
+
+th{background:#1e3c72;color:white;padding:12px}
+td{text-align:center;padding:10px}
+tr:nth-child(even){background:#f2f4f8}
+
+/* ===== BUTTON ===== */
+button{
+  background:linear-gradient(90deg,#1e3c72,#2a5298);
+  color:white;
+  border:none;
+  padding:10px 16px;
+  border-radius:10px;
+  cursor:pointer;
+}
+
+/* ===== STATUS ===== */
+.present{background:#27ae60;color:white;padding:6px 12px;border-radius:12px}
+.absent{background:#e74c3c;color:white;padding:6px 12px;border-radius:12px}
+
+/* ===== QR SCANNER ===== */
+.scan-card{
+  width:360px;
+  max-width:100%;
+  padding:25px;
+  border-radius:22px;
+  background:var(--card);
+  box-shadow:0 20px 50px rgba(0,0,0,.25);
+  margin:auto;
+}
+
+.scanner-frame{
+  position:relative;
+  width:100%;
+  aspect-ratio:1/1;
+  margin:20px 0;
+  border-radius:18px;
+  overflow:hidden;
+  background:#000;
+}
+
+#qr-reader{width:100%;height:100%}
+#qr-reader video{width:100%!important;height:100%!important;object-fit:cover}
+
+.corner{
+  position:absolute;
+  width:28px;
+  height:28px;
+  border:4px solid #3b82f6;
+}
+.corner.tl{top:10px;left:10px;border-right:none;border-bottom:none}
+.corner.tr{top:10px;right:10px;border-left:none;border-bottom:none}
+.corner.bl{bottom:10px;left:10px;border-right:none;border-top:none}
+.corner.br{bottom:10px;right:10px;border-left:none;border-top:none}
+
+.laser{
+  position:absolute;
+  top:0;
+  left:0;
+  width:100%;
+  height:3px;
+  background:linear-gradient(90deg,transparent,#3b82f6,transparent);
+  animation:laserMove 2.2s infinite ease-in-out;
+  box-shadow:0 0 12px #3b82f6;
+}
+
+@keyframes laserMove{
+  0%{top:0}
+  50%{top:100%}
+  100%{top:0}
+}
+
+/* ===== MOBILE ===== */
+@media(max-width:800px){
+  .layout{flex-direction:column}
+  .sidebar{
+    width:100%;
+    display:flex;
+    justify-content:space-around;
+    align-items:center;
+    padding:10px;
+  }
+  .sidebar h2{display:none}
+  .sidebar a{
+    margin:0;
+    font-size:11px;
+    padding:8px 6px;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:3px;
+  }
+  .main{padding:15px}
+  .profile-grid{grid-template-columns:1fr}
+  .cards{grid-template-columns:1fr}
+}
+</style>
+</head>
+
+<body>
+
+<!-- ================= LOGIN PAGE ================= -->
+<div id="loginPage">
+  <div class="login-box">
+
+    <select id="lang" onchange="changeLang(this.value)">
+      <option value="en">English</option>
+      <option value="fr">Français</option>
+      <option value="ar">العربية</option>
+    </select>
+
+    <h2 data-key="login">Login</h2>
+
+    <form onsubmit="login(event)">
+      <input type="text" id="username" data-key="username" placeholder="Username" required>
+      <input type="password" id="password" data-key="password" placeholder="Password" required>
+
+      <select id="role" required>
+        <option value="" data-key="selectRole">Select Role</option>
+        <option value="admin" data-key="admin">Admin</option>
+        <option value="teacher" data-key="teacher">Teacher</option>
+        <option value="student" data-key="student">Student</option>
+      </select>
+
+      <button type="submit" data-key="loginBtn">Login</button>
+    </form>
+  </div>
+</div>
+
+<!-- ================= ADMIN DASHBOARD ================= -->
+<div id="adminDash" class="dashboard">
+  <div class="layout">
+
+    <aside class="sidebar">
+      <h2>Admin</h2>
+      <a onclick="adminShow('profile', this)">👤<span>Profile</span></a>
+      <a onclick="adminShow('dashboard', this)" class="active">📊<span>Dashboard</span></a>
+      <a onclick="adminShow('courses', this)">📘<span>Courses</span></a>
+      <a onclick="adminShow('sessions', this)">📅<span>Sessions</span></a>
+      <a onclick="adminShow('attendance', this)">✅<span>Attendance</span></a>
+      <a onclick="adminShow('reports', this)">📄<span>Reports</span></a>
+      <a onclick="logout()">🚪<span>Logout</span></a>
+    </aside>
+
+    <div class="main">
+      <div class="header">
+        <h2 id="adminTitle">Dashboard</h2>
+        <div>
+          <button onclick="toggleTheme()">🌙 / ☀</button>
+          <select onchange="changeLanguage(this.value)">
+            <option value="en">EN</option>
+            <option value="fr">FR</option>
+            <option value="ar">AR</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- ADMIN PROFILE -->
+      <section id="admin-profile">
+        <div class="card" style="max-width:800px;margin:auto;text-align:center">
+          <img id="adminPic" src="https://via.placeholder.com/150"
+               style="width:120px;height:120px;border-radius:50%;object-fit:cover;margin-bottom:10px">
+          <h3>Admin Profile</h3>
+
+          <div class="profile-grid">
+            <label>First Name<input id="aFirstName" value="Ahmed" disabled></label>
+            <label>Last Name<input id="aLastName" value="Ben Ali" disabled></label>
+            <label>Birth Date<input type="date" id="aBirthDate" value="1980-06-20" disabled></label>
+            <label>Birth Place<input id="aBirthPlace" value="Oran" disabled></label>
+            <label>Department<input id="aDepartment" value="Administration" disabled></label>
+            <label>Grade<input id="aGrade" value="System Administrator" disabled></label>
+            <label>Email<input type="email" id="aEmail" value="admin@attendance.edu" disabled></label>
+          </div>
+
+          <button id="aEditBtn" onclick="enableAdminEdit()">✏️ Edit</button>
+          <button id="aSaveBtn" onclick="saveAdminEdit()" style="display:none">💾 Save</button>
+        </div>
+      </section>
+
+      <!-- ADMIN DASHBOARD -->
+      <section id="admin-dashboard" class="active">
+        <div class="cards">
+          <div class="card big-card">Students: 120</div>
+          <div class="card big-card">Courses: 6</div>
+          <div class="card big-card">Sessions: 30</div>
+          <div class="card big-card">Absences: 15</div>
+        </div>
+      </section>
+
+      <!-- COURSES -->
+      <section id="admin-courses">
+        <form class="card" style="max-width:500px">
+          <input type="text" placeholder="Course Name">
+          <button>Add Course</button>
+        </form>
+
+        <table>
+          <tr><th>ID</th><th>Course</th><th>Action</th></tr>
+          <tr><td>1</td><td>Math</td><td>Edit | Delete</td></tr>
+        </table>
+      </section>
+
+      <!-- SESSIONS -->
+      <section id="admin-sessions">
+        <form class="card" style="max-width:500px">
+          <select><option>Math</option><option>Physics</option></select>
+          <input type="date">
+          <input type="time">
+          <button>Create Session</button>
+        </form>
+
+        <table>
+          <tr><th>ID</th><th>Course</th><th>Date</th><th>Time</th></tr>
+          <tr><td>1</td><td>Math</td><td>2026-01-29</td><td>10:00</td></tr>
+        </table>
+      </section>
+
+      <!-- ATTENDANCE -->
+      <section id="admin-attendance">
+        <table>
+          <tr><th>Student</th><th>Status</th></tr>
+          <tr><td>Ali</td><td>Present</td></tr>
+          <tr><td>Sara</td><td>Absent</td></tr>
+        </table>
+      </section>
+
+      <!-- REPORTS -->
+      <section id="admin-reports">
+        <table>
+          <tr><th>Student</th><th>Course</th><th>Date</th><th>Status</th></tr>
+          <tr><td>Ali</td><td>Math</td><td>2026-01-29</td><td>Present</td></tr>
+        </table>
+      </section>
+
+    </div>
+  </div>
+</div>
+
+<!-- ================= TEACHER DASHBOARD ================= -->
+<div id="teacherDash" class="dashboard">
+  <div class="layout">
+
+    <aside class="sidebar">
+      <h2>Teacher</h2>
+      <a onclick="teacherShow('profile', this)" class="active">👤<span>Profile</span></a>
+      <a onclick="teacherShow('sessions', this)">📅<span>Sessions</span></a>
+      <a onclick="teacherShow('attendance', this)">✅<span>Attendance</span></a>
+      <a onclick="logout()">🚪<span>Logout</span></a>
+    </aside>
+
+    <div class="main">
+
+      <div class="header">
+        <h2 id="teacherTitle">Profile</h2>
+        <button onclick="toggleTheme()">🌙 / ☀</button>
+      </div>
+
+      <!-- PROFILE -->
+      <section id="teacher-profile" class="active">
+        <div class="card" style="text-align:center">
+
+          <img id="teacherPic"
+               src="https://via.placeholder.com/150"
+               style="width:120px;height:120px;border-radius:50%;object-fit:cover;margin-bottom:15px">
+
+          <h3>Teacher Profile</h3>
+
+          <div class="profile-grid">
+            <label>First Name<input id="tFirstName" value="John" disabled></label>
+            <label>Last Name<input id="tLastName" value="Doe" disabled></label>
+            <label>Birth Date<input type="date" id="tBirthDate" value="1985-03-12" disabled></label>
+            <label>Birth Place<input id="tBirthPlace" value="Algiers" disabled></label>
+            <label>Department<input id="tDepartment" value="Computer Science" disabled></label>
+            <label>Grade<input id="tGrade" value="Professor" disabled></label>
+            <label>Email<input type="email" id="tEmail" value="john.doe@university.edu" disabled></label>
+          </div>
+
+          <button id="tEditBtn" onclick="enableTeacherEdit()">✏️ Edit</button>
+          <button id="tSaveBtn" onclick="saveTeacherEdit()" style="display:none">💾 Save</button>
+        </div>
+      </section>
+
+      <!-- SESSIONS -->
+      <section id="teacher-sessions">
+        <div class="card">
+          <h3>My Sessions</h3>
+
+          <div class="card" style="border:1px solid #ddd">
+            <div style="display:flex;justify-content:space-between;margin:6px 0"><span>Course</span><b>Algorithms</b></div>
+            <div style="display:flex;justify-content:space-between;margin:6px 0"><span>Date</span><b>10/02/2026</b></div>
+            <div style="display:flex;justify-content:space-between;margin:6px 0"><span>Time</span><b>10:00</b></div>
+            <div style="display:flex;justify-content:space-between;margin:6px 0"><span>Room</span><b>A</b></div>
+
+            <button onclick="generateQR()" style="margin-top:10px;width:100%">Generate QR for Attendance</button>
+          </div>
+
+          <div id="qrBox" style="text-align:center;margin-top:15px"></div>
+        </div>
+      </section>
+
+      <!-- ATTENDANCE -->
+      <section id="teacher-attendance">
+        <div class="card">
+          <h3>Attendance</h3>
+          <p>Sara – Present</p>
+        </div>
+      </section>
+
+    </div>
+  </div>
+</div>
+
+<!-- ================= STUDENT DASHBOARD ================= -->
+<div id="studentDash" class="dashboard">
+  <div class="layout">
+
+    <aside class="sidebar">
+      <h2>Student</h2>
+      <a onclick="studentShow('profile', this)" class="active">👤<span>Profile</span></a>
+      <a onclick="studentShow('sessions', this)">📅<span>Sessions</span></a>
+      <a onclick="studentShow('attendance', this)">✅<span>Attendance</span></a>
+      <a onclick="studentShow('scan', this)">📷<span>Scan</span></a>
+      <a onclick="logout()">🚪<span>Logout</span></a>
+    </aside>
+
+    <div class="main">
+
+      <div class="header">
+        <h2 id="studentTitle">Profile</h2>
+        <div>
+          <button onclick="toggleTheme()">🌙 / ☀</button>
+          <select onchange="changeLanguage(this.value)">
+            <option value="en">EN</option>
+            <option value="fr">FR</option>
+            <option value="ar">AR</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- PROFILE -->
+      <section id="student-profile" class="active">
+        <div class="card" style="text-align:center;max-width:700px;margin:auto">
+
+          <img id="studentPic"
+               src="https://via.placeholder.com/150"
+               style="width:120px;height:120px;border-radius:50%;object-fit:cover">
+
+          <h3 style="margin-top:10px">Student Profile</h3>
+
+          <div class="profile-grid">
+            <label>First Name<input id="sFirstName" value="Ali" disabled></label>
+            <label>Last Name<input id="sLastName" value="Bensaid" disabled></label>
+            <label>Birth Date<input type="date" id="sBirthDate" value="2004-05-10" disabled></label>
+            <label>Birth Place<input id="sBirthPlace" value="Algiers" disabled></label>
+            <label>Email<input id="sEmail" value="ali@student.edu" disabled></label>
+            <label>Level<input id="sLevel" value="L3" disabled></label>
+            <label>Field<input id="sField" value="Computer Science" disabled></label>
+            <label>Major<input id="sMajor" value="Software Engineering" disabled></label>
+          </div>
+
+          <button id="sEditBtn" onclick="enableStudentEdit()">✏️ Edit</button>
+          <button id="sSaveBtn" onclick="saveStudentEdit()" style="display:none">💾 Save</button>
+        </div>
+      </section>
+
+      <!-- SESSIONS -->
+      <section id="student-sessions">
+        <h3>Sessions</h3>
+        <table>
+          <tr><th>Course</th><th>Date</th><th>Time</th><th>Room</th></tr>
+          <tr><td>Algorithms</td><td>10/02/2026</td><td>10:00</td><td>A</td></tr>
+        </table>
+      </section>
+
+      <!-- ATTENDANCE -->
+      <section id="student-attendance">
+        <h3>Attendance</h3>
+        <table>
+          <tr><th>Course</th><th>Date</th><th>Status</th></tr>
+          <tr><td>Algorithms</td><td>10/02/2026</td><td><span class="present">Present</span></td></tr>
+        </table>
+      </section>
+
+      <!-- SCAN -->
+      <section id="student-scan">
+        <div class="scan-card">
+          <h3>Scan QR Code</h3>
+          <p>Align the QR code within the frame</p>
+
+          <div class="scanner-frame">
+            <div id="qr-reader"></div>
+
+            <span class="corner tl"></span>
+            <span class="corner tr"></span>
+            <span class="corner bl"></span>
+            <span class="corner br"></span>
+
+            <div class="laser"></div>
+          </div>
+
+          <p id="scan-result">Waiting for scan...</p>
+        </div>
+      </section>
+
+    </div>
+  </div>
+</div>
+
+<script>
+/* ===================== TRANSLATION ===================== */
+const translations = {
+  en:{
+    login:"Login",username:"Username",password:"Password",
+    selectRole:"Select Role",admin:"Admin",teacher:"Teacher",
+    student:"Student",loginBtn:"Login",roleAlert:"Please select a role"
+  },
+  fr:{
+    login:"Connexion",username:"Nom d'utilisateur",password:"Mot de passe",
+    selectRole:"Choisir le rôle",admin:"Administrateur",teacher:"Enseignant",
+    student:"Étudiant",loginBtn:"Se connecter",roleAlert:"Veuillez choisir un rôle"
+  },
+  ar:{
+    login:"تسجيل الدخول",username:"اسم المستخدم",password:"كلمة المرور",
+    selectRole:"اختر الدور",admin:"مشرف",teacher:"أستاذ",
+    student:"طالب",loginBtn:"دخول",roleAlert:"يرجى اختيار الدور"
+  }
+};
+
+function changeLang(lang){
+  document.querySelectorAll("[data-key]").forEach(el=>{
+    const key=el.getAttribute("data-key");
+    if(el.placeholder!==undefined) el.placeholder=translations[lang][key];
+    else el.innerText=translations[lang][key];
+  });
+  document.documentElement.dir=lang==="ar"?"rtl":"ltr";
+  localStorage.setItem("lang",lang);
+}
+
+const savedLang=localStorage.getItem("lang")||"en";
+document.getElementById("lang").value=savedLang;
+changeLang(savedLang);
+
+/* ===================== LOGIN ===================== */
+function login(e){
+  e.preventDefault();
+  const role=document.getElementById("role").value;
+  const lang=localStorage.getItem("lang")||"en";
+
+  if(!role){
+    alert(translations[lang].roleAlert);
+    return;
+  }
+
+  localStorage.setItem("role",role);
+  showDashboard(role);
+}
+
+/* ===================== ROUTING ===================== */
+function showDashboard(role){
+  document.getElementById("loginPage").style.display="none";
+  document.querySelectorAll(".dashboard").forEach(d=>d.style.display="none");
+
+  if(role==="admin") document.getElementById("adminDash").style.display="block";
+  if(role==="teacher") document.getElementById("teacherDash").style.display="block";
+  if(role==="student") document.getElementById("studentDash").style.display="block";
+}
+
+const savedRole=localStorage.getItem("role");
+if(savedRole) showDashboard(savedRole);
+
+/* ===================== LOGOUT ===================== */
+function logout(){
+  localStorage.removeItem("role");
+  stopScanner();
+  document.querySelectorAll(".dashboard").forEach(d=>d.style.display="none");
+  document.getElementById("loginPage").style.display="flex";
+}
+
+/* ===================== THEME ===================== */
+function toggleTheme(){
+  document.body.classList.toggle("dark");
+  localStorage.setItem("theme",document.body.classList.contains("dark")?"dark":"light");
+}
+if(localStorage.getItem("theme")==="dark") document.body.classList.add("dark");
+
+/* ===================== LANGUAGE DIR ===================== */
+function changeLanguage(lang){
+  document.documentElement.dir=lang==="ar"?"rtl":"ltr";
+  localStorage.setItem("lang",lang);
+}
+
+/* ===================== ADMIN NAV ===================== */
+function adminShow(page,el){
+  document.querySelectorAll("#adminDash section").forEach(s=>s.classList.remove("active"));
+  document.getElementById("admin-"+page).classList.add("active");
+  document.getElementById("adminTitle").innerText=page.charAt(0).toUpperCase()+page.slice(1);
+
+  document.querySelectorAll("#adminDash .sidebar a").forEach(a=>a.classList.remove("active"));
+  el.classList.add("active");
+}
+
+/* ===================== TEACHER NAV ===================== */
+function teacherShow(page,el){
+  document.querySelectorAll("#teacherDash section").forEach(s=>s.classList.remove("active"));
+  document.getElementById("teacher-"+page).classList.add("active");
+  document.getElementById("teacherTitle").innerText=page.charAt(0).toUpperCase()+page.slice(1);
+
+  document.querySelectorAll("#teacherDash .sidebar a").forEach(a=>a.classList.remove("active"));
+  el.classList.add("active");
+}
+
+/* ===================== STUDENT NAV ===================== */
+function studentShow(page,el){
+  document.querySelectorAll("#studentDash section").forEach(s=>s.classList.remove("active"));
+  document.getElementById("student-"+page).classList.add("active");
+  document.getElementById("studentTitle").innerText=page.charAt(0).toUpperCase()+page.slice(1);
+
+  document.querySelectorAll("#studentDash .sidebar a").forEach(a=>a.classList.remove("active"));
+  el.classList.add("active");
+
+  if(page==="scan") startScanner();
+  else stopScanner();
+}
+
+/* ===================== ADMIN PROFILE ===================== */
+function enableAdminEdit(){
+  document.querySelectorAll("#admin-profile input").forEach(i=>{
+    if(i.id!=="aEmail") i.disabled=false;
+  });
+  aEditBtn.style.display="none";
+  aSaveBtn.style.display="inline-block";
+}
+
+function saveAdminEdit(){
+  document.querySelectorAll("#admin-profile input").forEach(i=>i.disabled=true);
+  aEditBtn.style.display="inline-block";
+  aSaveBtn.style.display="none";
+  alert("Admin profile updated");
+}
+
+/* ===================== TEACHER PROFILE ===================== */
+function enableTeacherEdit(){
+  document.querySelectorAll("#teacher-profile input").forEach(i=>i.disabled=false);
+  tEditBtn.style.display="none";
+  tSaveBtn.style.display="inline-block";
+}
+
+function saveTeacherEdit(){
+  document.querySelectorAll("#teacher-profile input").forEach(i=>i.disabled=true);
+  tEditBtn.style.display="inline-block";
+  tSaveBtn.style.display="none";
+  alert("Teacher profile updated");
+}
+
+/* ===================== STUDENT PROFILE ===================== */
+function enableStudentEdit(){
+  document.querySelectorAll("#student-profile input").forEach(i=>i.disabled=false);
+  sEditBtn.style.display="none";
+  sSaveBtn.style.display="inline-block";
+}
+
+function saveStudentEdit(){
+  document.querySelectorAll("#student-profile input").forEach(i=>i.disabled=true);
+  sEditBtn.style.display="inline-block";
+  sSaveBtn.style.display="none";
+  alert("Student profile updated");
+}
+
+/* ===================== TEACHER QR ===================== */
+function generateQR(){
+  const data="SESSION_"+Date.now();
+  document.getElementById("qrBox").innerHTML =
+    `<img src="https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${data}">`;
+}
+
+/* ===================== STUDENT QR SCANNER ===================== */
+let qrScanner=null;
+
+function startScanner(){
+  if(qrScanner) return;
+
+  qrScanner=new Html5Qrcode("qr-reader");
+  qrScanner.start(
+    { facingMode:"environment" },
+    { fps:10, qrbox:250 },
+    decodedText=>{
+      document.getElementById("scan-result").innerText="✅ Scanned: "+decodedText;
+      stopScanner();
+    },
+    error=>{}
+  ).catch(err=>{
+    document.getElementById("scan-result").innerText="❌ Camera error";
+    console.error(err);
+  });
+}
+
+function stopScanner(){
+  if(qrScanner){
+    qrScanner.stop().then(()=>{
+      qrScanner.clear();
+      qrScanner=null;
+    }).catch(()=>{});
+  }
+}
+</script>
+
+</body>
+</html>
